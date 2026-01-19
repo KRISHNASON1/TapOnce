@@ -1,0 +1,338 @@
+/**
+ * @file Profile Editor
+ * @description Edit all public profile information
+ * 
+ * @owner Dev 2
+ * @module customer
+ * 
+ * @see ProductRequirementsDocument.txt Section 6.3.2
+ */
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+    User,
+    Phone,
+    Mail,
+    Building,
+    Globe,
+    Linkedin,
+    Instagram,
+    Facebook,
+    Twitter,
+    Link,
+    Camera,
+    CheckCircle,
+    Eye
+} from 'lucide-react'
+
+// Mock profile data
+const mockProfile = {
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+    fullName: 'Rahul Verma',
+    jobTitle: 'Founder & CEO',
+    companyName: 'Tech Solutions Pvt Ltd',
+    bio: 'Passionate entrepreneur building innovative tech solutions. 10+ years of experience in software development and business strategy.',
+    phone: '+919876543210',
+    email: 'rahul@techsolutions.com',
+    whatsapp: '+919876543210',
+    linkedIn: 'https://linkedin.com/in/rahulverma',
+    instagram: 'https://instagram.com/rahulverma',
+    facebook: '',
+    twitter: 'https://twitter.com/rahulverma',
+    website: 'https://rahulverma.com'
+}
+
+export default function ProfileEditorPage() {
+    const router = useRouter()
+    const [isSaving, setIsSaving] = useState(false)
+    const [showSuccess, setShowSuccess] = useState(false)
+
+    // Form state
+    const [photo, setPhoto] = useState(mockProfile.photo)
+    const [fullName, setFullName] = useState(mockProfile.fullName)
+    const [jobTitle, setJobTitle] = useState(mockProfile.jobTitle)
+    const [companyName, setCompanyName] = useState(mockProfile.companyName)
+    const [bio, setBio] = useState(mockProfile.bio)
+    const [phone, setPhone] = useState(mockProfile.phone)
+    const [email, setEmail] = useState(mockProfile.email)
+    const [whatsapp, setWhatsapp] = useState(mockProfile.whatsapp)
+    const [linkedIn, setLinkedIn] = useState(mockProfile.linkedIn)
+    const [instagram, setInstagram] = useState(mockProfile.instagram)
+    const [facebook, setFacebook] = useState(mockProfile.facebook)
+    const [twitter, setTwitter] = useState(mockProfile.twitter)
+    const [website, setWebsite] = useState(mockProfile.website)
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setPhoto(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        setIsSaving(false)
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 3000)
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">Edit Profile</h1>
+                    <p className="text-muted-foreground">Update your public profile information</p>
+                </div>
+                <div className="flex gap-2">
+                    <a href="/dashboard/preview">
+                        <Button variant="outline" className="gap-2">
+                            <Eye className="w-4 h-4" />
+                            Preview
+                        </Button>
+                    </a>
+                    <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+                        {showSuccess ? (
+                            <>
+                                <CheckCircle className="w-4 h-4" />
+                                Saved!
+                            </>
+                        ) : (
+                            isSaving ? 'Saving...' : 'Save Changes'
+                        )}
+                    </Button>
+                </div>
+            </div>
+
+            {showSuccess && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Profile updated successfully! Changes are now live.
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Photo & Personal Info */}
+                <div className="space-y-6">
+                    {/* Profile Photo */}
+                    <div className="bg-white rounded-xl border p-6">
+                        <h2 className="font-semibold mb-4">Profile Photo</h2>
+                        <div className="text-center">
+                            <div className="relative inline-block">
+                                <img
+                                    src={photo}
+                                    alt="Profile"
+                                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                                />
+                                <label className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+                                    <Camera className="w-4 h-4 text-white" />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePhotoChange}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-3">
+                                Min 800×800px • Max 5MB • JPG, PNG
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Personal Information */}
+                    <div className="bg-white rounded-xl border p-6">
+                        <h2 className="font-semibold mb-4 flex items-center gap-2">
+                            <User className="w-4 h-4 text-blue-500" />
+                            Personal Information
+                        </h2>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="fullName">Full Name *</Label>
+                                <Input
+                                    id="fullName"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    placeholder="Your full name"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="jobTitle">Job Title / Headline</Label>
+                                <Input
+                                    id="jobTitle"
+                                    value={jobTitle}
+                                    onChange={(e) => setJobTitle(e.target.value)}
+                                    placeholder="e.g., Founder & CEO"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="companyName">Company Name</Label>
+                                <div className="relative">
+                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="companyName"
+                                        value={companyName}
+                                        onChange={(e) => setCompanyName(e.target.value)}
+                                        placeholder="Your company"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bio">Bio / About Me (max 500 chars)</Label>
+                                <Textarea
+                                    id="bio"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value.slice(0, 500))}
+                                    placeholder="Tell people about yourself..."
+                                    rows={4}
+                                />
+                                <p className="text-xs text-muted-foreground text-right">{bio.length}/500</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Middle Column - Contact Info */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl border p-6">
+                        <h2 className="font-semibold mb-4 flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-green-500" />
+                            Contact Information
+                        </h2>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Phone Number *</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="phone"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="+91 98765 43210"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email Address *</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                                <Input
+                                    id="whatsapp"
+                                    type="tel"
+                                    value={whatsapp}
+                                    onChange={(e) => setWhatsapp(e.target.value)}
+                                    placeholder="Same as phone if empty"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column - Social Links */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl border p-6">
+                        <h2 className="font-semibold mb-4 flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-purple-500" />
+                            Social Links
+                        </h2>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="linkedin">LinkedIn</Label>
+                                <div className="relative">
+                                    <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="linkedin"
+                                        value={linkedIn}
+                                        onChange={(e) => setLinkedIn(e.target.value)}
+                                        placeholder="https://linkedin.com/in/yourprofile"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="instagram">Instagram</Label>
+                                <div className="relative">
+                                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="instagram"
+                                        value={instagram}
+                                        onChange={(e) => setInstagram(e.target.value)}
+                                        placeholder="https://instagram.com/yourhandle"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="facebook">Facebook</Label>
+                                <div className="relative">
+                                    <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="facebook"
+                                        value={facebook}
+                                        onChange={(e) => setFacebook(e.target.value)}
+                                        placeholder="https://facebook.com/yourpage"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="twitter">Twitter / X</Label>
+                                <div className="relative">
+                                    <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="twitter"
+                                        value={twitter}
+                                        onChange={(e) => setTwitter(e.target.value)}
+                                        placeholder="https://twitter.com/yourhandle"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="website">Website / Portfolio</Label>
+                                <div className="relative">
+                                    <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        id="website"
+                                        value={website}
+                                        onChange={(e) => setWebsite(e.target.value)}
+                                        placeholder="https://yourwebsite.com"
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}

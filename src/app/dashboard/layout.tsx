@@ -1,58 +1,100 @@
 /**
  * @file Customer Layout
- * @description Layout wrapper for customer dashboard pages
+ * @description Layout wrapper for customer dashboard
  * 
- * @owner Dev 3
- * @module dashboard (customer)
+ * @owner Dev 2
+ * @module customer
  * 
- * FEATURES:
- * - Simple sidebar/header
- * - Auth protection (customer only)
- * - Mobile-responsive
+ * @see ProductRequirementsDocument.txt Section 6.3
  */
 
-import { ReactNode } from 'react'
+'use client'
 
-// TODO: Import auth check
-// import { requireCustomer } from '@/lib/auth'
+import { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import {
+    Home,
+    User,
+    Eye,
+    Download,
+    LogOut,
+    ExternalLink
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const navigationItems = [
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/dashboard/profile', label: 'Edit Profile', icon: User },
+    { href: '/dashboard/preview', label: 'Preview', icon: Eye },
+    { href: '/dashboard/download', label: 'Download', icon: Download },
+]
 
 export default function CustomerLayout({ children }: { children: ReactNode }) {
-    // TODO: Add auth check
-    // await requireCustomer()
+    const router = useRouter()
+
+    const handleLogout = async () => {
+        const supabase = createClient()
+        await supabase.auth.signOut()
+        router.push('/login')
+        router.refresh()
+    }
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white shadow-lg">
-                {/* 
-          TODO: Implement CustomerSidebar component
-          - Logo
-          - Navigation items from config/navigation.ts
-          - User info at bottom
-          - Logout button
-        */}
-                <div className="p-4">
-                    <h2 className="text-xl font-bold text-purple-600">TapOnce</h2>
-                    <p className="text-xs text-gray-500">My Dashboard</p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <header className="bg-white border-b sticky top-0 z-10">
+                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-xl font-bold text-blue-600">TapOnce</h1>
+                        <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded">My Dashboard</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <a href="/rahul-verma" target="_blank">
+                            <Button variant="outline" size="sm" className="gap-2">
+                                <ExternalLink className="w-4 h-4" />
+                                View Public Page
+                            </Button>
+                        </a>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleLogout}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
-                <nav className="mt-4">
-                    <p className="px-4 text-sm text-gray-400">Navigation placeholder</p>
-                </nav>
-            </aside>
 
-            {/* Main content */}
-            <main className="flex-1">
-                {/* Header */}
-                <header className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-                    <h1 className="text-lg font-semibold">My Dashboard</h1>
-                    {/* TODO: Add user menu */}
-                </header>
-
-                {/* Page content */}
-                <div className="p-6">
-                    {children}
+                {/* Navigation Tabs */}
+                <div className="max-w-4xl mx-auto px-4">
+                    <nav className="flex gap-1">
+                        {navigationItems.map((item) => (
+                            <a
+                                key={item.href}
+                                href={item.href}
+                                className="flex items-center gap-2 px-4 py-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-t-lg transition-colors border-b-2 border-transparent"
+                            >
+                                <item.icon className="w-4 h-4" />
+                                {item.label}
+                            </a>
+                        ))}
+                    </nav>
                 </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="max-w-4xl mx-auto px-4 py-6">
+                {children}
             </main>
+
+            {/* Footer */}
+            <footer className="border-t bg-white py-4 mt-8">
+                <div className="max-w-4xl mx-auto px-4 text-center text-sm text-muted-foreground">
+                    Powered by TapOnce | Need help? Contact support
+                </div>
+            </footer>
         </div>
     )
 }
