@@ -51,6 +51,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     <a href="/admin/finance" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
                         Finance
                     </a>
+                    <a href="/admin/catalog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                        Catalog
+                    </a>
                 </nav>
             </aside>
 
