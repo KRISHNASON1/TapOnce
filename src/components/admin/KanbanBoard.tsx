@@ -236,7 +236,7 @@ export function KanbanBoard({
     useEffect(() => setMounted(true), []);
 
     return (
-        <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col gap-4">
             {/* Filters */}
             <OrderFilters
                 searchQuery={searchQuery}
@@ -248,7 +248,7 @@ export function KanbanBoard({
             />
 
             {/* Kanban Board */}
-            <div className="flex flex-1 overflow-x-auto overflow-y-hidden gap-4 pb-4">
+            <div className="flex overflow-x-auto gap-4 pb-4">
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCorners}
