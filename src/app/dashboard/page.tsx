@@ -1,6 +1,6 @@
 /**
  * @file Customer Dashboard Home
- * @description Welcome screen with quick actions
+ * @description Welcome screen with real data and quick actions
  * 
  * @owner Dev 2
  * @module customer
@@ -10,7 +10,8 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -21,17 +22,18 @@ import {
     Download,
     ExternalLink,
     Calendar,
-    RefreshCw
+    RefreshCw,
+    Loader2,
+    AlertTriangle
 } from 'lucide-react'
 
-// Mock customer data
-const mockCustomer = {
-    name: 'Rahul Verma',
-    slug: 'rahul-verma',
-    profileUrl: 'https://taponce.in/rahul-verma',
-    cardActivatedDate: '2026-01-05T10:00:00Z',
-    lastProfileUpdate: '2026-01-18T14:30:00Z',
-    status: 'active'
+interface CustomerData {
+    name: string
+    slug: string
+    profileUrl: string
+    createdAt: string
+    updatedAt: string
+    status: string
 }
 
 function formatDate(dateString: string): string {
@@ -43,13 +45,96 @@ function formatDate(dateString: string): string {
 }
 
 export default function CustomerDashboardHome() {
+    const [customer, setCustomer] = useState<CustomerData | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [copied, setCopied] = useState(false)
-    const customer = mockCustomer
+
+    useEffect(() => {
+        async function fetchCustomerData() {
+            try {
+                const supabase = createClient()
+
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser()
+
+                if (!user) {
+                    setError('Not authenticated')
+                    setLoading(false)
+                    return
+                }
+
+                // Fetch profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, updated_at')
+                    .eq('id', user.id)
+                    .single()
+
+                // Fetch customer record
+                const { data: customerRecord } = await supabase
+                    .from('customers')
+                    .select('slug, company, status, created_at, updated_at')
+                    .eq('profile_id', user.id)
+                    .single()
+
+                if (customerRecord) {
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://taponce.in'
+                    setCustomer({
+                        name: profile?.full_name || 'Customer',
+                        slug: customerRecord.slug,
+                        profileUrl: `${baseUrl}/${customerRecord.slug}`,
+                        createdAt: customerRecord.created_at,
+                        updatedAt: customerRecord.updated_at || customerRecord.created_at,
+                        status: customerRecord.status
+                    })
+                } else {
+                    // No customer record yet (maybe order not approved)
+                    setCustomer({
+                        name: profile?.full_name || 'Customer',
+                        slug: '',
+                        profileUrl: '',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        status: 'pending'
+                    })
+                }
+            } catch (err) {
+                console.error('Error fetching customer data:', err)
+                setError('Failed to load profile')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchCustomerData()
+    }, [])
 
     const handleCopyUrl = () => {
-        navigator.clipboard.writeText(customer.profileUrl)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        if (customer?.profileUrl) {
+            navigator.clipboard.writeText(customer.profileUrl)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Loading your profile...</p>
+            </div>
+        )
+    }
+
+    if (error || !customer) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+                <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+                <p className="text-lg font-medium mb-2">Unable to load profile</p>
+                <p className="text-muted-foreground">{error}</p>
+            </div>
+        )
     }
 
     return (
@@ -59,36 +144,48 @@ export default function CustomerDashboardHome() {
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-2xl font-bold mb-2">Hi {customer.name}!</h1>
-                        <p className="text-white/80">Your card is active and ready to share.</p>
+                        {customer.status === 'active' ? (
+                            <p className="text-white/80">Your card is active and ready to share.</p>
+                        ) : (
+                            <p className="text-white/80">Your profile is being set up. Check back soon!</p>
+                        )}
 
                         {/* Profile URL */}
-                        <div className="mt-4 flex items-center gap-2 bg-white/10 rounded-lg p-3 max-w-md">
-                            <span className="text-sm truncate flex-1">{customer.profileUrl}</span>
-                            <button
-                                onClick={handleCopyUrl}
-                                className="p-2 hover:bg-white/10 rounded transition-colors"
-                                title="Copy URL"
-                            >
-                                {copied ? (
-                                    <CheckCircle className="w-5 h-5 text-green-300" />
-                                ) : (
-                                    <Copy className="w-5 h-5" />
-                                )}
-                            </button>
-                            <a
-                                href={`/${customer.slug}`}
-                                target="_blank"
-                                className="p-2 hover:bg-white/10 rounded transition-colors"
-                                title="Open in new tab"
-                            >
-                                <ExternalLink className="w-5 h-5" />
-                            </a>
-                        </div>
+                        {customer.slug && (
+                            <div className="mt-4 flex items-center gap-2 bg-white/10 rounded-lg p-3 max-w-md">
+                                <span className="text-sm truncate flex-1">{customer.profileUrl}</span>
+                                <button
+                                    onClick={handleCopyUrl}
+                                    className="p-2 hover:bg-white/10 rounded transition-colors"
+                                    title="Copy URL"
+                                >
+                                    {copied ? (
+                                        <CheckCircle className="w-5 h-5 text-green-300" />
+                                    ) : (
+                                        <Copy className="w-5 h-5" />
+                                    )}
+                                </button>
+                                <a
+                                    href={`/${customer.slug}`}
+                                    target="_blank"
+                                    className="p-2 hover:bg-white/10 rounded transition-colors"
+                                    title="Open in new tab"
+                                >
+                                    <ExternalLink className="w-5 h-5" />
+                                </a>
+                            </div>
+                        )}
                     </div>
 
-                    <Badge className="bg-green-500 text-white">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Active
+                    <Badge className={customer.status === 'active' ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}>
+                        {customer.status === 'active' ? (
+                            <>
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Active
+                            </>
+                        ) : (
+                            'Pending'
+                        )}
                     </Badge>
                 </div>
             </div>
@@ -100,9 +197,9 @@ export default function CustomerDashboardHome() {
                         <div className="p-2 rounded-lg bg-blue-100">
                             <Calendar className="w-5 h-5 text-blue-600" />
                         </div>
-                        <span className="text-sm text-muted-foreground">Card Activated</span>
+                        <span className="text-sm text-muted-foreground">Account Created</span>
                     </div>
-                    <p className="text-xl font-bold">{formatDate(customer.cardActivatedDate)}</p>
+                    <p className="text-xl font-bold">{formatDate(customer.createdAt)}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border p-5">
@@ -112,7 +209,7 @@ export default function CustomerDashboardHome() {
                         </div>
                         <span className="text-sm text-muted-foreground">Last Profile Update</span>
                     </div>
-                    <p className="text-xl font-bold">{formatDate(customer.lastProfileUpdate)}</p>
+                    <p className="text-xl font-bold">{formatDate(customer.updatedAt)}</p>
                 </div>
             </div>
 

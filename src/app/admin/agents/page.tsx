@@ -7,14 +7,16 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AgentTable } from '@/components/admin/AgentTable'
 import { AgentFilters } from '@/components/admin/AgentFilters'
 import { AgentDetailModal } from '@/components/admin/AgentDetailModal'
 import { CreateAgentModal } from '@/components/admin/CreateAgentModal'
 import { PayoutModal } from '@/components/admin/PayoutModal'
+import { PendingApplications } from '@/components/admin/PendingApplications'
 import { Agent, AgentStatus, CreateAgentPayload, PayoutPayload } from '@/types/agent'
-import { Users, IndianRupee, TrendingUp, Wallet } from 'lucide-react'
+import { AgentApplication } from '@/types/agent-application'
+import { Users, IndianRupee, TrendingUp, Wallet, Loader2, RefreshCw } from 'lucide-react'
 
 // Mock Data - will be replaced with Supabase queries
 const mockAgents: Agent[] = [
@@ -99,7 +101,8 @@ function formatCurrency(amount: number): string {
 }
 
 export default function AdminAgentsPage() {
-    const [agents, setAgents] = useState<Agent[]>(mockAgents)
+    const [agents, setAgents] = useState<Agent[]>([])
+    const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedStatus, setSelectedStatus] = useState<AgentStatus | null>(null)
     const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
@@ -107,6 +110,30 @@ export default function AdminAgentsPage() {
     const [createModalOpen, setCreateModalOpen] = useState(false)
     const [payoutAgent, setPayoutAgent] = useState<Agent | null>(null)
     const [payoutModalOpen, setPayoutModalOpen] = useState(false)
+
+    // Fetch agents from API on mount
+    const fetchAgents = async () => {
+        setLoading(true)
+        try {
+            const response = await fetch('/api/admin/agents', {
+                credentials: 'include'
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setAgents(data.agents || [])
+            } else {
+                console.error('Failed to fetch agents')
+            }
+        } catch (err) {
+            console.error('Error fetching agents:', err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchAgents()
+    }, [])
 
     // Filtered agents
     const filteredAgents = useMemo(() => {
@@ -283,6 +310,18 @@ export default function AdminAgentsPage() {
             {/* Results count */}
             <div className="mt-4 text-sm text-muted-foreground">
                 Showing {filteredAgents.length} of {agents.length} agents
+            </div>
+
+            {/* Pending Applications Section */}
+            <div className="mt-6 bg-white border rounded-lg p-4">
+                <PendingApplications
+                    onApprove={(application: AgentApplication) => {
+                        // Open create modal pre-filled with application data
+                        setCreateModalOpen(true)
+                        // Note: You could pre-fill the create form here
+                        console.log('Approve application:', application)
+                    }}
+                />
             </div>
 
             {/* Modals */}
